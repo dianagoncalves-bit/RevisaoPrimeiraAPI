@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { match } = require("node:assert");
+const conexao = require("./db.js");
 
 const app = express();
 
@@ -17,72 +17,84 @@ let ALUNOS = [
     { id: 3, nome: "zoro", curso: "espadachim mais lindo e leal" },
     { id: 4, nome: "valechaz", curso: "piadas mais engraçadas e salva clima do livro" }
 ]
+
 app.get("/", (req, res) => {
     res.json({
         mensagem: "API alunos funcionando"
     })
 })
 
-app.get("/alunos", (req, res) => {
-    res.json(ALUNOS);
-})
 
-app.get("/alunos/:id", (req, res) => {
-    const id = Number(req.params.id);
 
-    const aluno = ALUNOS.find(a => a.id === id);
-
-    if (!aluno) {
-        return res.status(404).json({
-            mensagem: "aluno não encontrado"
+app.get("/alunos", async (req, res) => {
+    try {
+        const [resultado] = await conexao.query("SELECT * FROM alunos");
+        res.status(200).json(resultado);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            mensagem: "ERRO ao buscar alunos"
         })
-    }
-
-    res.status(200).json(aluno);
+    };
 })
 
-app.post("/alunos/cadastrar", (req, res) => {
-    const { nome, curso } = req.body;
+app.get("/alunos/:id", async (req, res) => {
 
-    if (!nome || !curso) {
-        return res.status(400).json({ mensagem: "Nome e curso são obrigatorios" });
-    }
-
-    const novoId = ALUNOS.length > 0 ? Math.max(...ALUNOS.map(aluno => aluno.id)) + 1 : 1;
-
-    // const novoId = ALUNOS.length > 0 ? ALUNOS[ALUNOS.length - 1].id + 1 : 1;
-
-    const novoAluno = {
-        id: novoId,
-        nome: nome,
-        curso: curso
+    try {
+        const id = Number(req.params.id);
+        const [resultado] = await conexao.query(`SELECT * FROM alunos where id =${id}`)
+        res.status(200).json(resultado);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            mensagem: "ERRO ao buscar alunos"
+        })
     };
 
-    ALUNOS.push(novoAluno);
+    // const aluno = ALUNOS.find(a => a.id === id);
 
-    res.status(201).json({
-        mensagem: "Aluno Cadastrado com sucesso"
-    })
+    // if (!aluno) {
+    //     return res.status(404).json({
+    //         mensagem: "aluno não encontrado"
+    //     })
+    // }
+
+    // res.status(200).json(aluno);
+})
+
+app.post("/alunos/cadastrar", async (req, res) => {
+    const { nome, curso } = req.body;
 
 
 
+  const sql =  `INSERT INTO alunos (nome, curso) VALUES (${nome}, ${curso}) `;
+  
+//   const [resultado] = await conexao.query(`INSERT INTO alunos (nome, curso) VALUES (?, ?)`, [nome, curso]);
+//   const [resultado] = await conexao.query(`INSERT INTO alunos (nome, curso) VALUES (${nome}, ${curso})`);
+  const [resultado] = await conexao.query(sql);
+
+  res.status(201).json({
+    id: resultado.insertId,
+    nome,
+    curso
+  });
 });
 
 app.put("/alunos/:id", (req, res) => {
-    const id = Number(req.params.id);
+    const id = Number(req.params.id)
     const { nome, curso } = req.body;
 
-    const indice = ALUNOS.findIndex(aluno => aluno.id === id)
+    const indice = ALUNOS.findIndex(aluno => aluno.id === id);
 
     if (indice === -1) {
         return res.status(404).json({
-            mensagem: "aluno não encontrado"
-        })
+            mensagem: "Aluno não encontrado"
+        });
     }
 
     if (!nome || !curso) {
         return res.status(400).json({
-            mensagem: "nome e curso são obrigatório"
+            mensagem: "Nome e curso são obrigatorios"
         })
     }
 
@@ -90,12 +102,14 @@ app.put("/alunos/:id", (req, res) => {
         id: id,
         nome: nome,
         curso: curso
-    }
+    };
 
     res.status(200).json({
-        mensagem: "aluno atualizado com sucesso",
+        mensagem: "Aluno atualizado com sucesso",
         aluno: ALUNOS[indice]
     })
+
+
 })
 
 const PORTA = 3000;
@@ -104,4 +118,3 @@ app.listen(PORTA, () => {
     console.log(`servidor iniciado com sucesso`);
     console.log(`http://localhost:${`${PORTA}`}`)
 })
-
