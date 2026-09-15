@@ -7,8 +7,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 // {
-//     "nome": "Selwyn",
-//     "curso": "ser o mais lindo mundo"
+//     "nome": "demi",
+//     "curso": "ser o mais lindo"
 // }
 
 let ALUNOS = [
@@ -17,7 +17,6 @@ let ALUNOS = [
     {id: 3, nome: "zoro", curso:"espadachim mais lindo e leal"},
     {id: 4, nome: "valechaz", curso:"piadas mais engraçadas e salva clima do livro"}
 ]
-
 app.get("/", (req, res)=>{
     res.json({
         mensagem: "API alunos funcionando"
@@ -42,30 +41,62 @@ app.get("/alunos/:id",(req,res)=>{
     res.status(200).json(aluno);
 })
 
-app.post("/alunos/cadastrar",(req,res)=>{
-    const {nome, curso} = req.body;
+app.post("/alunos/cadastrar", (req, res) => {
+    const { nome, curso } = req.body;
 
-
-    if(!nome || !curso){
-        return res.status(400).json({mensagem: "Nome e curso são obrigatorios"})
+    if (!nome || !curso) {
+        return res.status(400).json({ mensagem: "Nome e curso são obrigatorios" });
     }
 
-    const novoId = ALUNOS.length > 0?  match.max(...ALUNOS.map(aluno => aluno.id)) +1 : 1;
+    const novoId = ALUNOS.length > 0 ? Math.max(...ALUNOS.map(aluno => aluno.id)) + 1 : 1;
 
-    // const novoId = ALUNOS.length > 0 ? ALUNOS[ALUNOS.length - 1].id +1 : 1;
-
-    const novoAluno ={
+    // const novoId = ALUNOS.length > 0 ? ALUNOS[ALUNOS.length - 1].id + 1 : 1;
+    
+    const novoAluno = {
         id: novoId,
-        nome: nome,
+        nome : nome,
         curso: curso
-    }
+    };
 
     ALUNOS.push(novoAluno);
 
     res.status(201).json({
-        mensagem: "aluno cadastrado com sucesso"
+        mensagem: "Aluno Cadastrado com sucesso"
     })
+
+
+
 });
+
+app.put("/alunos/:id", (req,res)=>{
+    const id = Number(req.params);
+    const {nome, curso} = req.body;
+
+    const indice = ALUNOS.findIndex(aluno => aluno.id === id)
+
+    if (indice === -1){
+        return res.status(404).json({
+            mensagem: "aluno não encontrado"
+        })
+    }
+
+    if(!nome || !curso){
+        return res.status(400).json({
+            mensagem: "nome e curso são obrigatório"
+        })
+    }
+
+    ALUNOS[indice]={
+        id: id,
+        nome: nome,
+        curso:curso
+    }
+
+    res.status(200).json({
+        mensagem: "aluno atualizado com sucesso",
+        aluno: ALUNOS[indice]
+    })
+})
 
 const PORTA = 3000;
 
